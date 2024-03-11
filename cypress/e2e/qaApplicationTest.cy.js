@@ -3,78 +3,59 @@ import { ProductPage } from '../pages/productPage';
 describe('qa application', () => {
         beforeEach(() => {
                 cy.login();
-                cy.wait(1000);
         })
 
         it('first scenario', () => {
+                let firstReturnAlias = 'firstProductList';
+                let secondReturnAlias = 'secondProductList';
                 const pPage = new ProductPage();
-                //getting product list from chart
-                pPage.getProductList().then(productList => {
-                        // Access the object in the productList array
-                        const p = productList[productList.length - 1];
-                        // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                        cy.wrap(p.series).as('series');
-                        cy.wrap(p.group).as('group');
-                        cy.wrap(p.value).as('value');
-                });
+                
+                //waiting chart to be fully rendered
+                cy.wait(1500);
+                
+                //getting current state of chart
+                pPage.getProductListFromChart().as(firstReturnAlias);
 
                 // set order by 10
-                cy.get('.a-GV-headerLabel').contains('Order').click();
-                cy.get('.a-IRR-sortWidget-searchField').should('be.visible').type('10')
-                cy.get('.a-IRR-sortWidget-searchField').should('be.visible').type('{enter}')
-                cy.wait(1000);
+                pPage.setOrderFilterValue(10);
 
                 //getting chart again to comparate with previous chart data
-                pPage.getProductList().then(productList => {
-                        // Access the object in the productList array
-                        const p2 = productList[productList.length - 1];
-                        //Comparing old chart state with new state
-                        cy.get('@series').then(old_seriesData => {
-                                cy.log(old_seriesData);
-                        })
-                        cy.get('@group').then(old_groupData => {
-                                cy.log(old_groupData);
-                        })
-                        cy.get('@value').then(old_valueData => {
-                                cy.log(old_valueData);
-                        })
-
-                        // Log the properties of the first product
-                        cy.log("newProduct Series: " + p2.series);
-                        cy.log("newProduct Group: " + p2.group);
-                        cy.log("newProduct Value: " + p2.value);
+                pPage.getProductListFromChart().as(secondReturnAlias);
+                cy.get(`@${firstReturnAlias}`).then(firstProductList => {
+                        cy.get(`@${secondReturnAlias}`).then(secondProductList => {
+                                // Perform the comparison
+                                expect(firstProductList).to.not.deep.equal(secondProductList);
+                        });
                 });
 
                 //removing filter by order
-                cy.get('.a-IG-button--remove').should('be.visible').click();
-                cy.wait(500);
+                pPage.removingFilter();
 
-                // set customer to Deli
-                cy.get('.a-GV-headerLabel').contains('Customer').click();
-                cy.get('.a-IRR-sortWidget-searchField').should('be.visible').type('Deli')
-                cy.get('.a-IRR-sortWidget-searchField').should('be.visible').type('{enter}')
-                cy.wait(1000);
+                // set order by 20
+                pPage.setOrderFilterValue(20);
 
                 //getting chart again to comparate with previous chart data
-                pPage.getProductList().then(productList => {
-                        // Access the object in the productList array
-                        const p3 = productList[productList.length - 1];
+                pPage.getProductListFromChart().as(secondReturnAlias);
+                cy.get(`@${firstReturnAlias}`).then(firstProductList => {
+                        cy.get(`@${secondReturnAlias}`).then(secondProductList => {
+                                // Perform the comparison
+                                expect(firstProductList).to.not.deep.equal(secondProductList);
+                        });
+                });
 
-                        //Comparing old chart state with new state
-                        cy.get('@series').then(old_seriesData => {
-                                cy.log(old_seriesData);
-                        })
-                        cy.get('@group').then(old_groupData => {
-                                cy.log(old_groupData);
-                        })
-                        cy.get('@value').then(old_valueData => {
-                                cy.log(old_valueData);
-                        })
+                //removing filter by order
+                pPage.removingFilter();
 
-                        // Log the properties of the first product
-                        cy.log("newProduct Series: " + p3.series);
-                        cy.log("newProduct Group: " + p3.group);
-                        cy.log("newProduct Value: " + p3.value);
+                // set customer to Deli
+                pPage.setCustomerFilter('Deli')
+
+                //getting chart again to comparate with previous chart data
+                pPage.getProductListFromChart().as(secondReturnAlias);
+                cy.get(`@${firstReturnAlias}`).then(firstProductList => {
+                        cy.get(`@${secondReturnAlias}`).then(secondProductList => {
+                                // Perform the comparison
+                                expect(firstProductList).to.not.deep.equal(secondProductList);
+                        });
                 });
         });
 });
